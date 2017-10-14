@@ -1,6 +1,6 @@
 # Apache with PHP on Alpine Linux 3.6
 
-This is a docker images with Alpine Linux 3.6 with Apache2 and PHP7.1 / Composer.
+This is a docker images with Apache2 and PHP7.1 / Composer based on Alpine Linux 3.6.
 
 To access site contents from outside the container you should map `/var/www/localhost/htdocs`.
 
