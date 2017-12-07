@@ -1,4 +1,4 @@
-FROM kalicki2k/alpine-base:3.6
+FROM kalicki2k/alpine-apache
 
 MAINTAINER Sebastian Kalicki (https://github.com/kalicki2k)
 
