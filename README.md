@@ -31,7 +31,7 @@ Various env vars can be set at runtime via your docker command or docker-compose
 ### PHP
 | Name                         | Default                           | Description            |
 | ---------------------------- | --------------------------------- | ---------------------- |
-| PHP_SHORT_OPEN_TAG           | Off                               | Tells PHP whether the short form (<? ?>) of PHP's open tag should be allowed. (See: http://php.net/short-open-tag) |
+| PHP_SHORT_OPEN_TAG           | Off                               | Tells PHP whether the short form `<? ?>` of PHP's open tag should be allowed. (See: http://php.net/short-open-tag) |
 | PHP_OUTPUT_BUFFERING         | 4096                              | You can enable output buffering for all files by setting this directive to 'On'. If you wish to limit the size of the buffer to a certain size - you can use a maximum number of bytes instead of 'On', as a value for this directive. (See: http://php.net/output-buffering) |
 | PHP_OPEN_BASEDIR             |                                   | Limit the files that can be accessed by PHP to the specified directory-tree, including the file itself. (See: http://php.net/open-basedir) |
 | PHP_MAX_EXECUTION_TIME       | 30                                | This sets the maximum time in seconds a script is allowed to run before it is terminated by the parser. (See: http://php.net/max-execution-time) |
