@@ -7,7 +7,10 @@
 CGI_PATH=/var/www/localhost/cgi-bin
 CONFIG_PATH=/etc/apache2/httpd.conf
 DOCUMENT_ROOT=/var/www/localhost/htdocs
+DOCUMENT_SKEL_ROOT=/var/www/skel/htdocs
 LOGS_PATH=/var/www/localhost/logs
+ERROR_PATH=/var/www/localhost/error
+ERROR_SKEL_PATH=/var/www/skel/error
 
 #
 # Checks if required folder exists. If not, it will be created.
@@ -19,12 +22,17 @@ fi
 
 if [[ ! -d ${DOCUMENT_ROOT} ]]
 then
-    mkdir ${DOCUMENT_ROOT}
+    cp -r ${DOCUMENT_SKEL_ROOT} ${DOCUMENT_ROOT}
 fi
 
 if [[ ! -d ${LOGS_PATH} ]]
 then
     mkdir ${LOGS_PATH}
+fi
+
+if [[ ! -d ${ERROR_PATH} ]]
+then
+    cp -r ${ERROR_SKEL_PATH} ${ERROR_PATH}
 fi
 
 #
