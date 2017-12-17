@@ -15,42 +15,35 @@ ERROR_SKEL_PATH=/var/www/skel/error
 #
 # Checks if required folder exists. If not, it will be created.
 #
-if [[ ! -d ${CGI_PATH} ]]
-then
+if [[ ! -d ${CGI_PATH} ]]; then
     mkdir ${CGI_PATH}
 fi
 
-if [[ ! -d ${DOCUMENT_ROOT} ]]
-then
+if [[ ! -d ${DOCUMENT_ROOT} ]]; then
     cp -r ${DOCUMENT_SKEL_ROOT} ${DOCUMENT_ROOT}
 fi
 
-if [[ ! -d ${LOGS_PATH} ]]
-then
+if [[ ! -d ${LOGS_PATH} ]]; then
     mkdir ${LOGS_PATH}
 fi
 
-if [[ ! -d ${ERROR_PATH} ]]
-then
+if [[ ! -d ${ERROR_PATH} ]]; then
     cp -r ${ERROR_SKEL_PATH} ${ERROR_PATH}
 fi
 
 #
 # Set server name
 #
-if [[ ! -z ${APACHE_SERVER_NAME} ]]
-then
+if [[ ! -z ${APACHE_SERVER_NAME} ]]; then
     sed -i "s/ServerName localhost/ServerName ${APACHE_SERVER_NAME}/" ${CONFIG_PATH}
 fi
 
 #
 # Create user and group
 #
-if [[ ! -z ${APACHE_RUN_USER} ]]
-then
+if [[ ! -z ${APACHE_RUN_USER} ]]; then
 
-    if [[ -z ${APACHE_RUN_GROUP} ]]
-    then
+    if [[ -z ${APACHE_RUN_GROUP} ]]; then
         APACHE_RUN_GROUP=apache
     fi
 
@@ -58,8 +51,7 @@ then
     sed -i "s/Group apache/Group ${APACHE_RUN_GROUP}/" ${CONFIG_PATH}
 
 
-    if [[ ! -z ${APACHE_RUN_USER_ID} ]] && [[ ! -z ${APACHE_RUN_GROUP_ID} ]]
-    then
+    if [[ ! -z ${APACHE_RUN_USER_ID} ]] && [[ ! -z ${APACHE_RUN_GROUP_ID} ]]; then
         addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP}
         adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${DOCUMENT_ROOT} ${APACHE_RUN_USER}
 
