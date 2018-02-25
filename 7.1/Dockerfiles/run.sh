@@ -35,6 +35,15 @@ if [[ ! -d ${ERROR_PATH} ]]; then
     cp -r ${ERROR_SKEL_PATH} ${ERROR_PATH}
 fi
 
+if [[ ! -z ${PUBLIC_DIRECTORY} ]]; then
+    PUBLIC_DIRECTORY_PATH=${DOCUMENT_ROOT}/${PUBLIC_DIRECTORY}
+    if [[ ! -d ${PUBLIC_DIRECTORY_PATH} ]]; then
+        mkdir ${PUBLIC_DIRECTORY_PATH}
+    fi
+
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}/" ${CONFIG_PATH}
+fi
+
 #
 # Set server name
 #

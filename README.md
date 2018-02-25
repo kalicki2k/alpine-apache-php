@@ -70,6 +70,11 @@ Various env vars can be set at runtime via your docker command or docker-compose
 | PHP_SESSION_COOKIE_DOMAIN    |                                   | The domain for which the cookie is valid. (See: http://php.net/session.cookie-domain)                                                                                                                                                                                         |
 | PHP_SESSION_COOKIE_HTTPONLY  |                                   | Whether or not to add the httpOnly flag to the cookie, which makes it inaccessible to browser scripting languages such as JavaScript. (See: http://php.net/session.cookie-httponly)                                                                                           |
 
+### Additional environment variables
+| Name             | Default | Description                                          |
+| ---------------- | ------- | ---------------------------------------------------- |
+| PUBLIC_DIRECTORY |         |                                                      |
+
 ## Examples
 - plain, accessible on port 8080 `docker run -d -p 8080:80 kalicki2k/alpine-apache-php:7.1`
 - with external contents in /home/kalicki2k/html `docker run -d -p 8080:80 -v /home/kalicki2k/html:/var/www/localhost kalicki2k/alpine-apache-php:7.1`
