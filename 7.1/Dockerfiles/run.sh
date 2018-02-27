@@ -41,7 +41,7 @@ if [[ ! -z ${PUBLIC_DIRECTORY} ]]; then
         mkdir ${PUBLIC_DIRECTORY_PATH}
     fi
 
-    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}/" ${CONFIG_PATH}
+    sed -i "s/\"\/var\/www\/localhost\/htdocs\"/\"\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}\"/" ${CONFIG_PATH}
 fi
 
 #
