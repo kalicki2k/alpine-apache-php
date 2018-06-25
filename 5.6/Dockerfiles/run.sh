@@ -8,6 +8,7 @@
 #   - Setting server name
 #   - Setting user and group
 #   - Setting SSL/TLS Certificate
+#   - Setting php.ini file
 #   - Starting Apache damon
 #
 
@@ -16,6 +17,7 @@ HTDOCS=/htdocs
 APACHE_ROOT=/etc/apache2/
 SERVER_ROOT=/var/www/localhost
 TEMPLATE_ROOT=/var/www/skel
+PHP_INI=/etc/php5/php.ini
 
 DIRECTORIES=(/cgi-bin ${HTDOCS} /logs ${ERROR})
 
@@ -101,6 +103,48 @@ function set_ssl {
     fi
 }
 
+function set_php_ini {
+    if [[ ! -z "$PHP_SHORT_OPEN_TAG" ]]; then sed -i "s/\;\?\\s\?short_open_tag = .*/short_open_tag = $PHP_SHORT_OPEN_TAG/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_OUTPUT_BUFFERING" ]]; then sed -i "s/\;\?\\s\?output_buffering = .*/output_buffering = $PHP_OUTPUT_BUFFERING/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_OPEN_BASEDIR" ]]; then sed -i "s/\;\?\\s\?open_basedir = .*/open_basedir = $PHP_OPEN_BASEDIR/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_EXECUTION_TIME" ]]; then sed -i "s/\;\?\\s\?max_execution_time = .*/max_execution_time = $PHP_MAX_EXECUTION_TIME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_INPUT_TIME" ]]; then sed -i "s/\;\?\\s\?max_input_time = .*/max_input_time = $PHP_MAX_INPUT_TIME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_INPUT_VARS" ]]; then sed -i "s/\;\?\\s\?max_input_vars = .*/max_input_vars = $PHP_MAX_INPUT_VARS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MEMORY_LIMIT" ]]; then sed -i "s/\;\?\\s\?memory_limit = .*/memory_limit = $PHP_MEMORY_LIMIT/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ERROR_REPORTING" ]]; then sed -i "s/\;\?\\s\?error_reporting = .*/error_reporting = $PHP_ERROR_REPORTING/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DISPLAY_ERRORS" ]]; then sed -i "s/\;\?\\s\?display_errors = .*/display_errors = $PHP_DISPLAY_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DISPLAY_STARTUP_ERRORS" ]]; then sed -i "s/\;\?\\s\?display_startup_errors = .*/display_startup_errors = $PHP_DISPLAY_STARTUP_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_LOG_ERRORS" ]]; then sed -i "s/\;\?\\s\?log_errors = .*/log_errors = $PHP_LOG_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_LOG_ERRORS_MAX_LEN" ]]; then sed -i "s/\;\?\\s\?log_errors_max_len = .*/log_errors_max_len = $PHP_LOG_ERRORS_MAX_LEN/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_IGNORE_REPEATED_ERRORS" ]]; then sed -i "s/\;\?\\s\?ignore_repeated_errors = .*/ignore_repeated_errors = $PHP_IGNORE_REPEATED_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_REPORT_MEMLEAKS" ]]; then sed -i "s/\;\?\\s\?report_memleaks = .*/report_memleaks = $PHP_REPORT_MEMLEAKS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_HTML_ERRORS" ]]; then sed -i "s/\;\?\\s\?html_errors = .*/html_errors = $PHP_HTML_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ERROR_LOG" ]]; then sed -i "s/\;\?\\s\?error_log = .*/error_log = $PHP_ERROR_LOG/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_POST_MAX_SIZE" ]]; then sed -i "s/\;\?\\s\?post_max_size = .*/post_max_size = $PHP_POST_MAX_SIZE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DEFAULT_MIMETYPE" ]]; then sed -i "s/\;\?\\s\?default_mimetype = .*/default_mimetype = $PHP_DEFAULT_MIMETYPE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DEFAULT_CHARSET" ]]; then sed -i "s/\;\?\\s\?default_charset = .*/default_charset = $PHP_DEFAULT_CHARSET/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_FILE_UPLOADS" ]]; then sed -i "s/\;\?\\s\?file_uploads = .*/file_uploads = $PHP_FILE_UPLOADS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_UPLOAD_TMP_DIR" ]]; then sed -i "s/\;\?\\s\?upload_tmp_dir = .*/upload_tmp_dir = $PHP_UPLOAD_TMP_DIR/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_UPLOAD_MAX_FILESIZE" ]]; then sed -i "s/\;\?\\s\?upload_max_filesize = .*/upload_max_filesize = $PHP_UPLOAD_MAX_FILESIZE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_FILE_UPLOADS" ]]; then sed -i "s/\;\?\\s\?max_file_uploads = .*/max_file_uploads = $PHP_MAX_FILE_UPLOADS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ALLOW_URL_FOPEN" ]]; then sed -i "s/\;\?\\s\?allow_url_fopen = .*/allow_url_fopen = $PHP_ALLOW_URL_FOPEN/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ALLOW_URL_INCLUDE" ]]; then sed -i "s/\;\?\\s\?allow_url_include = .*/allow_url_include = $PHP_ALLOW_URL_INCLUDE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DEFAULT_SOCKET_TIMEOUT" ]]; then sed -i "s/\;\?\\s\?default_socket_timeout = .*/default_socket_timeout = $PHP_DEFAULT_SOCKET_TIMEOUT/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DATE_TIMEZONE" ]]; then sed -i "s/\;\?\\s\?date.timezone = .*/date.timezone = $PHP_DATE_TIMEZONE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_PDO_MYSQL_CACHE_SIZE" ]]; then sed -i "s/\;\?\\s\?pdo_mysql.cache_size = .*/pdo_mysql.cache_size = $PHP_PDO_MYSQL_CACHE_SIZE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_PDO_MYSQL_DEFAULT_SOCKET" ]]; then sed -i "s/\;\?\\s\?pdo_mysql.default_socket = .*/pdo_mysql.default_socket = $PHP_PDO_MYSQL_DEFAULT_SOCKET/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_SAVE_HANDLER" ]]; then sed -i "s/\;\?\\s\?session.save_handler = .*/session.save_handler = $PHP_SESSION_SAVE_HANDLER/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_SAVE_PATH" ]]; then sed -i "s/\;\?\\s\?session.save_path = .*/session.save_path = $PHP_SESSION_SAVE_PATH/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_USE_STRICT_MODE" ]]; then sed -i "s/\;\?\\s\?session.use_strict_mode = .*/session.use_strict_mode = $PHP_SESSION_USE_STRICT_MODE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_USE_COOKIES" ]]; then sed -i "s/\;\?\\s\?session.use_cookies = .*/session.use_cookies = $PHP_SESSION_USE_COOKIES/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_SECURE" ]]; then sed -i "s/\;\?\\s\?session.cookie_secure = .*/session.cookie_secure = $PHP_SESSION_COOKIE_SECURE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_NAME" ]]; then sed -i "s/\;\?\\s\?session.name = .*/session.name = $PHP_SESSION_NAME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_LIFETIME" ]]; then sed -i "s/\;\?\\s\?session.cookie_lifetime = .*/session.cookie_lifetime = $PHP_SESSION_COOKIE_LIFETIME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_PATH" ]]; then sed -i "s/\;\?\\s\?session.cookie_path = .*/session.cookie_path = $PHP_SESSION_COOKIE_PATH/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_DOMAIN" ]]; then sed -i "s/\;\?\\s\?session.cookie_domain = .*/session.cookie_domain = $PHP_SESSION_COOKIE_DOMAIN/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_HTTPONLY" ]]; then sed -i "s/\;\?\\s\?session.cookie_httponly = .*/session.cookie_httponly = $PHP_SESSION_COOKIE_HTTPONLY/" ${PHP_INI}; fi
+}
+
 #
 # Make sure we're not confused by old, incompletely-shutdown httpd context after restarting the container.
 # httpd won't start correctly if it thinks it is already running.
@@ -123,6 +167,8 @@ create_web_page
 set_server_name
 set_user_and_group
 set_ssl
+
+set_php_ini
 
 clean
 run
