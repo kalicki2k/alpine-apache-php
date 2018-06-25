@@ -1,82 +1,123 @@
-#!/bin/sh
+#!/bin/bash
 #
-# Version: 1.0
+# Version: 1.1
 # Purpose:
-#   - Creating required folder and setup error pages for Apache
-#   - Setting environments for Apache
+#   - Creating required directories
+#   - Creating error pages
+#   - Creating default index.html
+#   - Setting server name
+#   - Setting user and group
+#   - Setting SSL/TLS Certificate
 #   - Starting Apache damon
 #
 
-CGI_PATH=/var/www/localhost/cgi-bin
-CONFIG_PATH=/etc/apache2/httpd.conf
-DOCUMENT_ROOT=/var/www/localhost/htdocs
-DOCUMENT_SKEL_ROOT=/var/www/skel/htdocs
-LOGS_PATH=/var/www/localhost/logs
-ERROR_PATH=/var/www/localhost/error
-ERROR_SKEL_PATH=/var/www/skel/error
+ERROR=/error
+HTDOCS=/htdocs
+APACHE_ROOT=/etc/apache2/
+SERVER_ROOT=/var/www/localhost
+TEMPLATE_ROOT=/var/www/skel
+
+DIRECTORIES=(/cgi-bin ${HTDOCS} /logs ${ERROR})
 
 #
 # Checks if required folder exists. If not, it will be created.
 #
-if [[ ! -d ${CGI_PATH} ]]; then
-    mkdir ${CGI_PATH}
-fi
-
-if [[ ! -d ${DOCUMENT_ROOT} ]]; then
-    cp -r ${DOCUMENT_SKEL_ROOT} ${DOCUMENT_ROOT}
-fi
-
-if [[ ! -d ${LOGS_PATH} ]]; then
-    mkdir ${LOGS_PATH}
-fi
-
-if [[ ! -d ${ERROR_PATH} ]]; then
-    cp -r ${ERROR_SKEL_PATH} ${ERROR_PATH}
-fi
+function create_directories {
+    for DIRECTORY in ${DIRECTORIES[@]}; do
+        DIRECTORY_PATH="${SERVER_ROOT}${DIRECTORY}"
+        if [ ! -d ${DIRECTORY_PATH} ]; then
+            mkdir ${DIRECTORY_PATH}
+            echo "Created directory ${DIRECTORY}"
+        fi
+    done
+}
 
 #
-# Set server name
+# Check if error folder is empty. If not, it will create error pages.
 #
-if [[ ! -z ${APACHE_SERVER_NAME} ]]; then
-    sed -i "s/ServerName localhost/ServerName ${APACHE_SERVER_NAME}/" ${CONFIG_PATH}
-fi
+function create_error_pages {
+    if [ ! "$(ls -A "${SERVER_ROOT}${ERROR}")" ]; then
+        cp -r ${TEMPLATE_ROOT}${ERROR} ${SERVER_ROOT}${ERROR}
+        echo "Created error pages.";
+    fi
+}
 
-#
-# Create user and group
-#
-if [[ ! -z ${APACHE_RUN_USER} ]]; then
+function create_web_page {
+    if grep -q "It works!" ${SERVER_ROOT}${HTDOCS}/index.html; then
+        cp ${TEMPLATE_ROOT}${HTDOCS}/index.html ${SERVER_ROOT}${HTDOCS}/index.html
+        echo "Created default web pages.";
+    fi
+}
 
-    if [[ -z ${APACHE_RUN_GROUP} ]]; then
-        APACHE_RUN_GROUP=apache
+function set_server_name {
+    if [ ! -z ${APACHE_SERVER_NAME} ]; then
+        sed -i "s/ServerName www.example.com:80/ServerName ${APACHE_SERVER_NAME}:80/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/ServerName www.example.com:443/ServerName ${APACHE_SERVER_NAME}:443/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set server name to ${APACHE_SERVER_NAME}."
+    fi
+}
+
+function set_user_and_group {
+    if [ ! -z ${APACHE_RUN_USER} ]; then
+
+         if [ -z ${APACHE_RUN_GROUP} ]; then
+            APACHE_RUN_GROUP=apache
+        fi
+
+        sed -i "s/User apache/User ${APACHE_RUN_USER}/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/Group apache/Group ${APACHE_RUN_GROUP}/" ${APACHE_ROOT}/httpd.conf
+
+
+        if [ ! -z ${APACHE_RUN_USER_ID} ] && [ ! -z ${APACHE_RUN_GROUP_ID} ]; then
+            addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP} > /dev/null 2>&1
+            adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
+
+        else
+            addgroup ${APACHE_RUN_GROUP} > /dev/null 2>&1
+            adduser -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
+        fi
+
+        chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}/${HTDOCS}
+        echo "Created apache user and group."
+    fi
+}
+
+function set_ssl {
+    if [[ -n ${APACHE_SSL_CERTIFICATE} && -n ${APACHE_SSL_CERTIFICATE_KEY} && -n ${APACHE_SSL_CERTIFICATE_CHAIN} ]] ; then
+        sed -i -e "s/SSLCertificateChainFile .*/SSLCertificateChainFile ${APACHE_SSL_CERTIFICATE_CHAIN//\//\\/}/" -e "s/#SSLCertificateChainFile/SSLCertificateChainFile/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set SSLCertificateChainFile to ${APACHE_SSL_CERTIFICATE_CHAIN}"
     fi
 
-    sed -i "s/User apache/User ${APACHE_RUN_USER}/" ${CONFIG_PATH}
-    sed -i "s/Group apache/Group ${APACHE_RUN_GROUP}/" ${CONFIG_PATH}
-
-
-    if [[ ! -z ${APACHE_RUN_USER_ID} ]] && [[ ! -z ${APACHE_RUN_GROUP_ID} ]]; then
-        addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP}
-        adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${DOCUMENT_ROOT} ${APACHE_RUN_USER}
-
-    else
-        addgroup ${APACHE_RUN_GROUP}
-        adduser -G ${APACHE_RUN_GROUP} -h ${DOCUMENT_ROOT} ${APACHE_RUN_USER}
+    if [[ -n ${APACHE_SSL_CERTIFICATE} && -n ${APACHE_SSL_CERTIFICATE_KEY} ]] ; then
+        sed -i -e "s/SSLCertificateFile .*/SSLCertificateFile ${APACHE_SSL_CERTIFICATE//\//\\/}/" -e "s/#SSLCertificateFile/SSLCertificateFile/" ${APACHE_ROOT}/conf.d/ssl.conf
+        sed -i -e "s/SSLCertificateKeyFile .*/SSLCertificateKeyFile ${APACHE_SSL_CERTIFICATE_KEY//\//\\/}/" -e "s/#SSLCertificateKeyFile/SSLCertificateKeyFile/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set SSLCertificateFile to ${APACHE_SSL_CERTIFICATE}"
+        echo "Set SSLCertificateKeyFile to ${APACHE_SSL_CERTIFICATE_KEY}"
     fi
-
-else
-    APACHE_RUN_USER=apache
-    APACHE_RUN_GROUP=apache
-fi
-
-chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${DOCUMENT_ROOT}
+}
 
 #
 # Make sure we're not confused by old, incompletely-shutdown httpd context after restarting the container.
 # httpd won't start correctly if it thinks it is already running.
 #
-rm -rf /run/apache2/*
+function clean {
+    rm -rf /run/apache2/*
+}
 
 #
 # Starting Apache daemon...
 #
-exec /usr/sbin/httpd -D FOREGROUND
+function run {
+    exec /usr/sbin/httpd -D FOREGROUND
+}
+
+create_directories
+create_error_pages
+create_web_page
+
+set_server_name
+set_user_and_group
+set_ssl
+
+clean
+run

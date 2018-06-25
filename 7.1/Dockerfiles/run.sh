@@ -1,135 +1,169 @@
-#!/bin/sh
+#!/bin/bash
 #
-# Version: 1.0
+# Version: 1.1
 # Purpose:
-#   - Creating required folder and setup error pages for Apache
-#   - Setting environments for Apache
-#   - Editing php.ini file
+#   - Creating required directories
+#   - Creating error pages
+#   - Creating default index.html
+#   - Setting server name
+#   - Setting user and group
+#   - Setting SSL/TLS Certificate
+#   - Setting php.ini file
 #   - Starting Apache damon
 #
 
-CGI_PATH=/var/www/localhost/cgi-bin
-CONFIG_PATH=/etc/apache2/httpd.conf
-DOCUMENT_ROOT=/var/www/localhost/htdocs
-DOCUMENT_SKEL_ROOT=/var/www/skel/htdocs
-LOGS_PATH=/var/www/localhost/logs
-ERROR_PATH=/var/www/localhost/error
-ERROR_SKEL_PATH=/var/www/skel/error
+ERROR=/error
+HTDOCS=/htdocs
+APACHE_ROOT=/etc/apache2/
+SERVER_ROOT=/var/www/localhost
+TEMPLATE_ROOT=/var/www/skel
+PHP_INI=/etc/php7/php.ini
+
+DIRECTORIES=(/cgi-bin ${HTDOCS} /logs ${ERROR})
 
 #
 # Checks if required folder exists. If not, it will be created.
 #
-if [[ ! -d ${CGI_PATH} ]]; then
-    mkdir ${CGI_PATH}
-fi
+function create_directories {
+    for DIRECTORY in ${DIRECTORIES[@]}; do
+        DIRECTORY_PATH="${SERVER_ROOT}${DIRECTORY}"
+        if [ ! -d ${DIRECTORY_PATH} ]; then
+            mkdir ${DIRECTORY_PATH}
+            echo "Created directory ${DIRECTORY}"
+        fi
+    done
+}
 
-if [[ ! -d ${DOCUMENT_ROOT} ]]; then
-    cp -r ${DOCUMENT_SKEL_ROOT} ${DOCUMENT_ROOT}
-fi
+#
+# Check if error folder is empty. If not, it will create error pages.
+#
+function create_error_pages {
+    if [ ! "$(ls -A "${SERVER_ROOT}${ERROR}")" ]; then
+        cp -r ${TEMPLATE_ROOT}${ERROR} ${SERVER_ROOT}${ERROR}
+        echo "Created error pages.";
+    fi
+}
 
-if [[ ! -d ${LOGS_PATH} ]]; then
-    mkdir ${LOGS_PATH}
-fi
+function create_web_page {
+    if grep -q "It works!" ${SERVER_ROOT}${HTDOCS}/index.html; then
+        cp ${TEMPLATE_ROOT}${HTDOCS}/index.html ${SERVER_ROOT}${HTDOCS}/index.html
+        echo "Created default web pages.";
+    fi
+}
 
-if [[ ! -d ${ERROR_PATH} ]]; then
-    cp -r ${ERROR_SKEL_PATH} ${ERROR_PATH}
-fi
+function set_server_name {
+    if [ ! -z ${APACHE_SERVER_NAME} ]; then
+        sed -i "s/ServerName www.example.com:80/ServerName ${APACHE_SERVER_NAME}:80/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/ServerName www.example.com:443/ServerName ${APACHE_SERVER_NAME}:443/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set server name to ${APACHE_SERVER_NAME}."
+    fi
+}
 
-if [[ ! -z ${PUBLIC_DIRECTORY} ]]; then
-    PUBLIC_DIRECTORY_PATH=${DOCUMENT_ROOT}/${PUBLIC_DIRECTORY}
-    if [[ ! -d ${PUBLIC_DIRECTORY_PATH} ]]; then
-        mkdir ${PUBLIC_DIRECTORY_PATH}
+function set_user_and_group {
+    if [ ! -z ${APACHE_RUN_USER} ]; then
+
+         if [ -z ${APACHE_RUN_GROUP} ]; then
+            APACHE_RUN_GROUP=apache
+        fi
+
+        sed -i "s/User apache/User ${APACHE_RUN_USER}/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/Group apache/Group ${APACHE_RUN_GROUP}/" ${APACHE_ROOT}/httpd.conf
+
+
+        if [ ! -z ${APACHE_RUN_USER_ID} ] && [ ! -z ${APACHE_RUN_GROUP_ID} ]; then
+            addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP} > /dev/null 2>&1
+            adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
+
+        else
+            addgroup ${APACHE_RUN_GROUP} > /dev/null 2>&1
+            adduser -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
+        fi
+
+        chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}/${HTDOCS}
+        echo "Created apache user and group."
+    fi
+}
+
+function set_ssl {
+    if [[ -n ${APACHE_SSL_CERTIFICATE} && -n ${APACHE_SSL_CERTIFICATE_KEY} && -n ${APACHE_SSL_CERTIFICATE_CHAIN} ]] ; then
+        sed -i -e "s/SSLCertificateChainFile .*/SSLCertificateChainFile ${APACHE_SSL_CERTIFICATE_CHAIN//\//\\/}/" -e "s/#SSLCertificateChainFile/SSLCertificateChainFile/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set SSLCertificateChainFile to ${APACHE_SSL_CERTIFICATE_CHAIN}"
     fi
 
-    sed -i "s/\"\/var\/www\/localhost\/htdocs\"/\"\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}\"/" ${CONFIG_PATH}
-fi
-
-#
-# Set server name
-#
-if [[ ! -z ${APACHE_SERVER_NAME} ]]; then
-    sed -i "s/ServerName localhost/ServerName ${APACHE_SERVER_NAME}/" ${CONFIG_PATH}
-fi
-
-#
-# Create user and group
-#
-if [[ ! -z ${APACHE_RUN_USER} ]]; then
-
-    if [[ -z ${APACHE_RUN_GROUP} ]]; then
-        APACHE_RUN_GROUP=apache
+    if [[ -n ${APACHE_SSL_CERTIFICATE} && -n ${APACHE_SSL_CERTIFICATE_KEY} ]] ; then
+        sed -i -e "s/SSLCertificateFile .*/SSLCertificateFile ${APACHE_SSL_CERTIFICATE//\//\\/}/" -e "s/#SSLCertificateFile/SSLCertificateFile/" ${APACHE_ROOT}/conf.d/ssl.conf
+        sed -i -e "s/SSLCertificateKeyFile .*/SSLCertificateKeyFile ${APACHE_SSL_CERTIFICATE_KEY//\//\\/}/" -e "s/#SSLCertificateKeyFile/SSLCertificateKeyFile/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set SSLCertificateFile to ${APACHE_SSL_CERTIFICATE}"
+        echo "Set SSLCertificateKeyFile to ${APACHE_SSL_CERTIFICATE_KEY}"
     fi
+}
 
-    sed -i "s/User apache/User ${APACHE_RUN_USER}/" ${CONFIG_PATH}
-    sed -i "s/Group apache/Group ${APACHE_RUN_GROUP}/" ${CONFIG_PATH}
-
-
-    if [[ ! -z ${APACHE_RUN_USER_ID} ]] && [[ ! -z ${APACHE_RUN_GROUP_ID} ]]; then
-        addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP}
-        adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${DOCUMENT_ROOT} ${APACHE_RUN_USER}
-
-    else
-        addgroup ${APACHE_RUN_GROUP}
-        adduser -G ${APACHE_RUN_GROUP} -h ${DOCUMENT_ROOT} ${APACHE_RUN_USER}
-    fi
-
-else
-    APACHE_RUN_USER=apache
-    APACHE_RUN_GROUP=apache
-fi
-
-chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${DOCUMENT_ROOT}
-
-#
-# PHP.ini
-#
-if [[ ! -z "$PHP_SHORT_OPEN_TAG" ]]; then sed -i "s/\;\?\\s\?short_open_tag = .*/short_open_tag = $PHP_SHORT_OPEN_TAG/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_OUTPUT_BUFFERING" ]]; then sed -i "s/\;\?\\s\?output_buffering = .*/output_buffering = $PHP_OUTPUT_BUFFERING/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_OPEN_BASEDIR" ]]; then sed -i "s/\;\?\\s\?open_basedir = .*/open_basedir = $PHP_OPEN_BASEDIR/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_MAX_EXECUTION_TIME" ]]; then sed -i "s/\;\?\\s\?max_execution_time = .*/max_execution_time = $PHP_MAX_EXECUTION_TIME/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_MAX_INPUT_TIME" ]]; then sed -i "s/\;\?\\s\?max_input_time = .*/max_input_time = $PHP_MAX_INPUT_TIME/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_MAX_INPUT_VARS" ]]; then sed -i "s/\;\?\\s\?max_input_vars = .*/max_input_vars = $PHP_MAX_INPUT_VARS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_MEMORY_LIMIT" ]]; then sed -i "s/\;\?\\s\?memory_limit = .*/memory_limit = $PHP_MEMORY_LIMIT/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_ERROR_REPORTING" ]]; then sed -i "s/\;\?\\s\?error_reporting = .*/error_reporting = $PHP_ERROR_REPORTING/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_DISPLAY_ERRORS" ]]; then sed -i "s/\;\?\\s\?display_errors = .*/display_errors = $PHP_DISPLAY_ERRORS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_DISPLAY_STARTUP_ERRORS" ]]; then sed -i "s/\;\?\\s\?display_startup_errors = .*/display_startup_errors = $PHP_DISPLAY_STARTUP_ERRORS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_LOG_ERRORS" ]]; then sed -i "s/\;\?\\s\?log_errors = .*/log_errors = $PHP_LOG_ERRORS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_LOG_ERRORS_MAX_LEN" ]]; then sed -i "s/\;\?\\s\?log_errors_max_len = .*/log_errors_max_len = $PHP_LOG_ERRORS_MAX_LEN/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_IGNORE_REPEATED_ERRORS" ]]; then sed -i "s/\;\?\\s\?ignore_repeated_errors = .*/ignore_repeated_errors = $PHP_IGNORE_REPEATED_ERRORS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_REPORT_MEMLEAKS" ]]; then sed -i "s/\;\?\\s\?report_memleaks = .*/report_memleaks = $PHP_REPORT_MEMLEAKS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_HTML_ERRORS" ]]; then sed -i "s/\;\?\\s\?html_errors = .*/html_errors = $PHP_HTML_ERRORS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_ERROR_LOG" ]]; then sed -i "s/\;\?\\s\?error_log = .*/error_log = $PHP_ERROR_LOG/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_POST_MAX_SIZE" ]]; then sed -i "s/\;\?\\s\?post_max_size = .*/post_max_size = $PHP_POST_MAX_SIZE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_DEFAULT_MIMETYPE" ]]; then sed -i "s/\;\?\\s\?default_mimetype = .*/default_mimetype = $PHP_DEFAULT_MIMETYPE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_DEFAULT_CHARSET" ]]; then sed -i "s/\;\?\\s\?default_charset = .*/default_charset = $PHP_DEFAULT_CHARSET/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_FILE_UPLOADS" ]]; then sed -i "s/\;\?\\s\?file_uploads = .*/file_uploads = $PHP_FILE_UPLOADS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_UPLOAD_TMP_DIR" ]]; then sed -i "s/\;\?\\s\?upload_tmp_dir = .*/upload_tmp_dir = $PHP_UPLOAD_TMP_DIR/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_UPLOAD_MAX_FILESIZE" ]]; then sed -i "s/\;\?\\s\?upload_max_filesize = .*/upload_max_filesize = $PHP_UPLOAD_MAX_FILESIZE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_MAX_FILE_UPLOADS" ]]; then sed -i "s/\;\?\\s\?max_file_uploads = .*/max_file_uploads = $PHP_MAX_FILE_UPLOADS/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_ALLOW_URL_FOPEN" ]]; then sed -i "s/\;\?\\s\?allow_url_fopen = .*/allow_url_fopen = $PHP_ALLOW_URL_FOPEN/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_ALLOW_URL_INCLUDE" ]]; then sed -i "s/\;\?\\s\?allow_url_include = .*/allow_url_include = $PHP_ALLOW_URL_INCLUDE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_DEFAULT_SOCKET_TIMEOUT" ]]; then sed -i "s/\;\?\\s\?default_socket_timeout = .*/default_socket_timeout = $PHP_DEFAULT_SOCKET_TIMEOUT/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_DATE_TIMEZONE" ]]; then sed -i "s/\;\?\\s\?date.timezone = .*/date.timezone = $PHP_DATE_TIMEZONE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_PDO_MYSQL_CACHE_SIZE" ]]; then sed -i "s/\;\?\\s\?pdo_mysql.cache_size = .*/pdo_mysql.cache_size = $PHP_PDO_MYSQL_CACHE_SIZE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_PDO_MYSQL_DEFAULT_SOCKET" ]]; then sed -i "s/\;\?\\s\?pdo_mysql.default_socket = .*/pdo_mysql.default_socket = $PHP_PDO_MYSQL_DEFAULT_SOCKET/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_SAVE_HANDLER" ]]; then sed -i "s/\;\?\\s\?session.save_handler = .*/session.save_handler = $PHP_SESSION_SAVE_HANDLER/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_SAVE_PATH" ]]; then sed -i "s/\;\?\\s\?session.save_path = .*/session.save_path = $PHP_SESSION_SAVE_PATH/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_USE_STRICT_MODE" ]]; then sed -i "s/\;\?\\s\?session.use_strict_mode = .*/session.use_strict_mode = $PHP_SESSION_USE_STRICT_MODE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_USE_COOKIES" ]]; then sed -i "s/\;\?\\s\?session.use_cookies = .*/session.use_cookies = $PHP_SESSION_USE_COOKIES/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_COOKIE_SECURE" ]]; then sed -i "s/\;\?\\s\?session.cookie_secure = .*/session.cookie_secure = $PHP_SESSION_COOKIE_SECURE/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_NAME" ]]; then sed -i "s/\;\?\\s\?session.name = .*/session.name = $PHP_SESSION_NAME/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_COOKIE_LIFETIME" ]]; then sed -i "s/\;\?\\s\?session.cookie_lifetime = .*/session.cookie_lifetime = $PHP_SESSION_COOKIE_LIFETIME/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_COOKIE_PATH" ]]; then sed -i "s/\;\?\\s\?session.cookie_path = .*/session.cookie_path = $PHP_SESSION_COOKIE_PATH/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_COOKIE_DOMAIN" ]]; then sed -i "s/\;\?\\s\?session.cookie_domain = .*/session.cookie_domain = $PHP_SESSION_COOKIE_DOMAIN/" /etc/php7/php.ini; fi
-if [[ ! -z "$PHP_SESSION_COOKIE_HTTPONLY" ]]; then sed -i "s/\;\?\\s\?session.cookie_httponly = .*/session.cookie_httponly = $PHP_SESSION_COOKIE_HTTPONLY/" /etc/php7/php.ini; fi
+function set_php_ini {
+    if [[ ! -z "$PHP_SHORT_OPEN_TAG" ]]; then sed -i "s/\;\?\\s\?short_open_tag = .*/short_open_tag = $PHP_SHORT_OPEN_TAG/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_OUTPUT_BUFFERING" ]]; then sed -i "s/\;\?\\s\?output_buffering = .*/output_buffering = $PHP_OUTPUT_BUFFERING/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_OPEN_BASEDIR" ]]; then sed -i "s/\;\?\\s\?open_basedir = .*/open_basedir = $PHP_OPEN_BASEDIR/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_EXECUTION_TIME" ]]; then sed -i "s/\;\?\\s\?max_execution_time = .*/max_execution_time = $PHP_MAX_EXECUTION_TIME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_INPUT_TIME" ]]; then sed -i "s/\;\?\\s\?max_input_time = .*/max_input_time = $PHP_MAX_INPUT_TIME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_INPUT_VARS" ]]; then sed -i "s/\;\?\\s\?max_input_vars = .*/max_input_vars = $PHP_MAX_INPUT_VARS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MEMORY_LIMIT" ]]; then sed -i "s/\;\?\\s\?memory_limit = .*/memory_limit = $PHP_MEMORY_LIMIT/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ERROR_REPORTING" ]]; then sed -i "s/\;\?\\s\?error_reporting = .*/error_reporting = $PHP_ERROR_REPORTING/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DISPLAY_ERRORS" ]]; then sed -i "s/\;\?\\s\?display_errors = .*/display_errors = $PHP_DISPLAY_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DISPLAY_STARTUP_ERRORS" ]]; then sed -i "s/\;\?\\s\?display_startup_errors = .*/display_startup_errors = $PHP_DISPLAY_STARTUP_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_LOG_ERRORS" ]]; then sed -i "s/\;\?\\s\?log_errors = .*/log_errors = $PHP_LOG_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_LOG_ERRORS_MAX_LEN" ]]; then sed -i "s/\;\?\\s\?log_errors_max_len = .*/log_errors_max_len = $PHP_LOG_ERRORS_MAX_LEN/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_IGNORE_REPEATED_ERRORS" ]]; then sed -i "s/\;\?\\s\?ignore_repeated_errors = .*/ignore_repeated_errors = $PHP_IGNORE_REPEATED_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_REPORT_MEMLEAKS" ]]; then sed -i "s/\;\?\\s\?report_memleaks = .*/report_memleaks = $PHP_REPORT_MEMLEAKS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_HTML_ERRORS" ]]; then sed -i "s/\;\?\\s\?html_errors = .*/html_errors = $PHP_HTML_ERRORS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ERROR_LOG" ]]; then sed -i "s/\;\?\\s\?error_log = .*/error_log = $PHP_ERROR_LOG/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_POST_MAX_SIZE" ]]; then sed -i "s/\;\?\\s\?post_max_size = .*/post_max_size = $PHP_POST_MAX_SIZE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DEFAULT_MIMETYPE" ]]; then sed -i "s/\;\?\\s\?default_mimetype = .*/default_mimetype = $PHP_DEFAULT_MIMETYPE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DEFAULT_CHARSET" ]]; then sed -i "s/\;\?\\s\?default_charset = .*/default_charset = $PHP_DEFAULT_CHARSET/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_FILE_UPLOADS" ]]; then sed -i "s/\;\?\\s\?file_uploads = .*/file_uploads = $PHP_FILE_UPLOADS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_UPLOAD_TMP_DIR" ]]; then sed -i "s/\;\?\\s\?upload_tmp_dir = .*/upload_tmp_dir = $PHP_UPLOAD_TMP_DIR/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_UPLOAD_MAX_FILESIZE" ]]; then sed -i "s/\;\?\\s\?upload_max_filesize = .*/upload_max_filesize = $PHP_UPLOAD_MAX_FILESIZE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_MAX_FILE_UPLOADS" ]]; then sed -i "s/\;\?\\s\?max_file_uploads = .*/max_file_uploads = $PHP_MAX_FILE_UPLOADS/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ALLOW_URL_FOPEN" ]]; then sed -i "s/\;\?\\s\?allow_url_fopen = .*/allow_url_fopen = $PHP_ALLOW_URL_FOPEN/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_ALLOW_URL_INCLUDE" ]]; then sed -i "s/\;\?\\s\?allow_url_include = .*/allow_url_include = $PHP_ALLOW_URL_INCLUDE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DEFAULT_SOCKET_TIMEOUT" ]]; then sed -i "s/\;\?\\s\?default_socket_timeout = .*/default_socket_timeout = $PHP_DEFAULT_SOCKET_TIMEOUT/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_DATE_TIMEZONE" ]]; then sed -i "s/\;\?\\s\?date.timezone = .*/date.timezone = $PHP_DATE_TIMEZONE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_PDO_MYSQL_CACHE_SIZE" ]]; then sed -i "s/\;\?\\s\?pdo_mysql.cache_size = .*/pdo_mysql.cache_size = $PHP_PDO_MYSQL_CACHE_SIZE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_PDO_MYSQL_DEFAULT_SOCKET" ]]; then sed -i "s/\;\?\\s\?pdo_mysql.default_socket = .*/pdo_mysql.default_socket = $PHP_PDO_MYSQL_DEFAULT_SOCKET/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_SAVE_HANDLER" ]]; then sed -i "s/\;\?\\s\?session.save_handler = .*/session.save_handler = $PHP_SESSION_SAVE_HANDLER/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_SAVE_PATH" ]]; then sed -i "s/\;\?\\s\?session.save_path = .*/session.save_path = $PHP_SESSION_SAVE_PATH/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_USE_STRICT_MODE" ]]; then sed -i "s/\;\?\\s\?session.use_strict_mode = .*/session.use_strict_mode = $PHP_SESSION_USE_STRICT_MODE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_USE_COOKIES" ]]; then sed -i "s/\;\?\\s\?session.use_cookies = .*/session.use_cookies = $PHP_SESSION_USE_COOKIES/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_SECURE" ]]; then sed -i "s/\;\?\\s\?session.cookie_secure = .*/session.cookie_secure = $PHP_SESSION_COOKIE_SECURE/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_NAME" ]]; then sed -i "s/\;\?\\s\?session.name = .*/session.name = $PHP_SESSION_NAME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_LIFETIME" ]]; then sed -i "s/\;\?\\s\?session.cookie_lifetime = .*/session.cookie_lifetime = $PHP_SESSION_COOKIE_LIFETIME/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_PATH" ]]; then sed -i "s/\;\?\\s\?session.cookie_path = .*/session.cookie_path = $PHP_SESSION_COOKIE_PATH/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_DOMAIN" ]]; then sed -i "s/\;\?\\s\?session.cookie_domain = .*/session.cookie_domain = $PHP_SESSION_COOKIE_DOMAIN/" ${PHP_INI}; fi
+    if [[ ! -z "$PHP_SESSION_COOKIE_HTTPONLY" ]]; then sed -i "s/\;\?\\s\?session.cookie_httponly = .*/session.cookie_httponly = $PHP_SESSION_COOKIE_HTTPONLY/" ${PHP_INI}; fi
+}
 
 #
 # Make sure we're not confused by old, incompletely-shutdown httpd context after restarting the container.
 # httpd won't start correctly if it thinks it is already running.
 #
-rm -rf /run/apache2/*
+function clean {
+    rm -rf /run/apache2/*
+}
 
 #
 # Starting Apache daemon...
 #
-exec /usr/sbin/httpd -D FOREGROUND
+function run {
+    exec /usr/sbin/httpd -D FOREGROUND
+}
+
+create_directories
+create_error_pages
+create_web_page
+
+set_server_name
+set_user_and_group
+set_ssl
+
+set_php_ini
+
+clean
+run
