@@ -60,7 +60,7 @@ function set_server_name {
 function set_user_and_group {
     if [ ! -z ${APACHE_RUN_USER} ]; then
 
-         if [ -z ${APACHE_RUN_GROUP} ]; then
+        if [ -z ${APACHE_RUN_GROUP} ]; then
             APACHE_RUN_GROUP=apache
         fi
 
@@ -71,16 +71,21 @@ function set_user_and_group {
         if [ ! -z ${APACHE_RUN_USER_ID} ] && [ ! -z ${APACHE_RUN_GROUP_ID} ]; then
             addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP} > /dev/null 2>&1
             adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
-
         else
             addgroup ${APACHE_RUN_GROUP} > /dev/null 2>&1
             adduser -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
         fi
 
-        chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}/${HTDOCS}
-        echo "Created apache user and group."
+        echo "Created apache custom user and group."
+    else
+        APACHE_RUN_USER=apache
+        APACHE_RUN_GROUP=apache
+        echo "Created apache default user and group."
     fi
+
+    chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}/${HTDOCS}
 }
+
 
 function set_ssl {
     if [[ -n ${APACHE_SSL_CERTIFICATE} && -n ${APACHE_SSL_CERTIFICATE_KEY} && -n ${APACHE_SSL_CERTIFICATE_CHAIN} ]] ; then
