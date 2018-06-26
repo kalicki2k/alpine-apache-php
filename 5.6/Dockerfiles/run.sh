@@ -6,6 +6,7 @@
 #   - Creating error pages
 #   - Creating default index.html
 #   - Setting server name
+#   - Setting server e-mail
 #   - Setting user and group
 #   - Setting SSL/TLS Certificate
 #   - Setting php.ini file
@@ -56,6 +57,18 @@ function set_server_name {
         sed -i "s/ServerName www.example.com:80/ServerName ${APACHE_SERVER_NAME}:80/" ${APACHE_ROOT}/httpd.conf
         sed -i "s/ServerName www.example.com:443/ServerName ${APACHE_SERVER_NAME}:443/" ${APACHE_ROOT}/conf.d/ssl.conf
         echo "Set server name to ${APACHE_SERVER_NAME}."
+    fi
+}
+
+function set_server_mail {
+    if [ ! -z ${APACHE_SERVER_MAIL} ]; then
+        sed -i "s/ServerAdmin .*/ServerAdmin ${APACHE_SERVER_MAIL}/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/ServerAdmin .*/ServerAdmin ${APACHE_SERVER_MAIL}/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set server email to ${APACHE_SERVER_MAIL}."
+    elif [ ! -z ${APACHE_SERVER_NAME} ]; then
+        sed -i "s/ServerAdmin .*/ServerAdmin webmaster@${APACHE_SERVER_NAME}/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/ServerAdmin .*/ServerAdmin webmaster@${APACHE_SERVER_NAME}/" ${APACHE_ROOT}/conf.d/ssl.conf
+        echo "Set server email to webmaster@${APACHE_SERVER_NAME}."
     fi
 }
 
@@ -165,6 +178,7 @@ create_error_pages
 create_web_page
 
 set_server_name
+set_server_mail
 set_user_and_group
 set_ssl
 
