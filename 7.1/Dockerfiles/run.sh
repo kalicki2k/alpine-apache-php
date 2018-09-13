@@ -49,7 +49,7 @@ function create_error_pages {
 function create_public_directory {
     if [ ! -z ${PUBLIC_DIRECTORY} ]; then
         PUBLIC_DIRECTORY_PATH=${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY}
-        sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/\"\/var\/www\/localhost\/htdocs\"/\"\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}\"/" ${APACHE_ROOT}/httpd.conf
 
         if [[ ! -d ${PUBLIC_DIRECTORY_PATH} ]]; then
             mkdir ${PUBLIC_DIRECTORY_PATH}

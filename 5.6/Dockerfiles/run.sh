@@ -4,6 +4,7 @@
 # Purpose:
 #   - Creating required directories
 #   - Creating error pages
+#   - Creating public directory
 #   - Creating default index.html
 #   - Setting server name
 #   - Setting server e-mail
@@ -18,7 +19,7 @@ HTDOCS=/htdocs
 APACHE_ROOT=/etc/apache2/
 SERVER_ROOT=/var/www/localhost
 TEMPLATE_ROOT=/var/www/skel
-PHP_INI=/etc/php5/php.ini
+PHP_INI=/etc/php7/php.ini
 
 DIRECTORIES=(/cgi-bin ${HTDOCS} /logs ${ERROR})
 
@@ -45,10 +46,25 @@ function create_error_pages {
     fi
 }
 
-function create_web_page {
-    if grep -q "It works!" ${SERVER_ROOT}${HTDOCS}/index.html; then
+function create_public_directory {
+    if [ ! -z ${PUBLIC_DIRECTORY} ]; then
+        PUBLIC_DIRECTORY_PATH=${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY}
+        sed -i "s/\"\/var\/www\/localhost\/htdocs\"/\"\/var\/www\/localhost\/htdocs\/${PUBLIC_DIRECTORY}\"/" ${APACHE_ROOT}/httpd.conf
+
+        if [[ ! -d ${PUBLIC_DIRECTORY_PATH} ]]; then
+            mkdir ${PUBLIC_DIRECTORY_PATH}
+            echo "Created public directory."
+        fi
+    fi
+}
+
+function create_default_page {
+    if [ -z ${PUBLIC_DIRECTORY} ] && [ -z "$(ls -A ${SERVER_ROOT}${HTDOCS})" ]; then
         cp ${TEMPLATE_ROOT}${HTDOCS}/index.html ${SERVER_ROOT}${HTDOCS}/index.html
-        echo "Created default web pages.";
+        echo "Created default pages."
+    elif [ ! -z ${PUBLIC_DIRECTORY} ] && [ -z "$(ls -A ${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY})" ]; then
+        cp ${TEMPLATE_ROOT}${HTDOCS}/index.html ${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY}/index.html
+        echo "Created default pages."
     fi
 }
 
@@ -170,12 +186,14 @@ function clean {
 # Starting Apache daemon...
 #
 function run {
+    echo "Started Apache daemon."
     exec /usr/sbin/httpd -D FOREGROUND
 }
 
 create_directories
 create_error_pages
-create_web_page
+create_public_directory
+create_default_page
 
 set_server_name
 set_server_mail
