@@ -41,7 +41,7 @@ function create_directories {
 #
 function create_error_pages {
     if [ ! "$(ls -A "${SERVER_ROOT}${ERROR}")" ]; then
-        cp -r ${TEMPLATE_ROOT}${ERROR} ${SERVER_ROOT}${ERROR}
+        cp -r ${TEMPLATE_ROOT}${ERROR} ${SERVER_ROOT}
         echo "Created error pages.";
     fi
 }
