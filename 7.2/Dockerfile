@@ -1,4 +1,4 @@
-FROM kalicki2k/alpine-apache:2.4.34-3.7
+FROM kalicki2k/alpine-apache:2.4.34-3.8
 
 MAINTAINER Sebastian Kalicki (https://github.com/kalicki2k)
 
