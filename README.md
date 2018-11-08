@@ -77,7 +77,7 @@ Various env vars can be set at runtime via your docker command or docker-compose
 ### Additional environment variables
 | Name             | Default | Description                                          |
 | ---------------- | ------- | ---------------------------------------------------- |
-| PUBLIC_DIRECTORY |         |                                                      |
+| PUBLIC_DIRECTORY |         | The public directory contains the `index.php` file, which is the entry point for all requests entering your application. |
 
 ## Examples
 - plain, accessible on port 8080 `docker run -d -p 8080:80 kalicki2k/alpine-apache-php:7.1`
