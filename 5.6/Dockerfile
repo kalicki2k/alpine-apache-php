@@ -12,7 +12,8 @@ RUN apk update && apk upgrade && \
     curl -sS https://getcomposer.org/installer | php5 -- --install-dir=/usr/local/bin --filename=composer && \
     chmod +x /run.sh && \
     rm -rf /var/www/localhost/htdocs/index.html && \
-    rm -rf /var/cache/apk/*
+    rm -rf /var/cache/apk/* && \
+    ln -s /usr/bin/php5 /usr/bin/php
 
 WORKDIR /var/www/localhost
 
