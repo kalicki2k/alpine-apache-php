@@ -19,7 +19,7 @@ HTDOCS=/htdocs
 APACHE_ROOT=/etc/apache2/
 SERVER_ROOT=/var/www/localhost
 TEMPLATE_ROOT=/var/www/skel
-PHP_INI=/etc/php7/php.ini
+PHP_INI=/etc/php5/php.ini
 
 DIRECTORIES=(/cgi-bin ${HTDOCS} /logs ${ERROR})
 
