@@ -1,4 +1,4 @@
-FROM kalicki2k/alpine-apache:2.4.34-3.8
+FROM kalicki2k/alpine-apache:3.8
 
 MAINTAINER Sebastian Kalicki (https://github.com/kalicki2k)
 
@@ -11,7 +11,7 @@ RUN apk update && apk upgrade && \
             php7-session php7-simplexml php7-soap php7-sqlite3 php7-tidy php7-tokenizer php7-xml php7-xmlrpc php7-xmlreader php7-xmlwriter php7-xsl php7-zip php7-zlib && \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
     chmod +x /run.sh && \
-    rm -rf /var/www/localhost/htdocs/index.html && \
+    rm -rf /var/www/localhost/htdocs && \
     rm -rf /var/cache/apk/*
 
 WORKDIR /var/www/localhost
