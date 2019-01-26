@@ -77,6 +77,9 @@ function set_server_name {
     if [[ ! -z ${APACHE_SERVER_NAME} ]]; then
         sed -i "s/ServerName www.example.com:80/ServerName ${APACHE_SERVER_NAME}:80/" ${APACHE_ROOT}/httpd.conf
         sed -i "s/ServerName www.example.com:443/ServerName ${APACHE_SERVER_NAME}:443/" ${APACHE_ROOT}/conf.d/ssl.conf
+
+        sed -i "s/error\.log/error\.${APACHE_SERVER_NAME}\.log/" ${APACHE_ROOT}/httpd.conf
+        sed -i "s/access\.log/access\.${APACHE_SERVER_NAME}\.log/" ${APACHE_ROOT}/httpd.conf
         echo "Set server name to ${APACHE_SERVER_NAME}."
     fi
 }
