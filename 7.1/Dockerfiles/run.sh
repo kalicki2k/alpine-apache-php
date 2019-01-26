@@ -110,8 +110,7 @@ function set_user_and_group {
         sed -i "s/User apache/User ${APACHE_RUN_USER}/" ${APACHE_ROOT}/httpd.conf
         sed -i "s/Group apache/Group ${APACHE_RUN_GROUP}/" ${APACHE_ROOT}/httpd.conf
 
-
-        if [ ! -z ${APACHE_RUN_USER_ID} ] && [ ! -z ${APACHE_RUN_GROUP_ID} ]; then
+        if [[ ! -z ${APACHE_RUN_USER_ID} ]] && [[ ! -z ${APACHE_RUN_GROUP_ID} ]]; then
             addgroup -g ${APACHE_RUN_GROUP_ID} ${APACHE_RUN_GROUP} > /dev/null 2>&1
             adduser -u ${APACHE_RUN_USER_ID} -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
         else
