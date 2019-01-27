@@ -22,7 +22,11 @@ TEMPLATE_ROOT=/var/www/skel
 PHP_INI=/etc/php7/php.ini
 
 if [[ ! -z ${APACHE_WEB_ROOT} ]]; then
-    HTDOCS=/${APACHE_WEB_ROOT}
+    if [[ ${APACHE_WEB_ROOT} =~ ^/ ]]; then
+        HTDOCS=${APACHE_WEB_ROOT}
+    else
+        HTDOCS=/${APACHE_WEB_ROOT}
+    fi
 fi
 
 #
@@ -97,10 +101,16 @@ function set_server_mail {
 }
 
 function set_web_root {
-    if [[ ! -z ${APACHE_WEB_ROOT} ]] && [[ -z ${PUBLIC_DIRECTORY} ]]; then
-        sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${APACHE_WEB_ROOT}/" ${APACHE_ROOT}/httpd.conf
-        sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${APACHE_WEB_ROOT}/" ${APACHE_ROOT}/conf.d/ssl.conf
+    if [[ ${APACHE_WEB_ROOT} =~ ^/ ]]; then
+        HTDOCS=${APACHE_WEB_ROOT:1:${#APACHE_WEB_ROOT}}
     fi
+
+    if [[ ${HTDOCS} == *"/"* ]]; then
+        HTDOCS=${HTDOCS//\//\\/}
+    fi
+
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS}/" ${APACHE_ROOT}/httpd.conf
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS}/" ${APACHE_ROOT}/conf.d/ssl.conf
 }
 
 function set_user_and_group {
