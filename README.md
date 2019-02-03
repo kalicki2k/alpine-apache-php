@@ -1,6 +1,6 @@
 # Apache with PHP on Alpine Linux 3.6
 
-This is a docker images with Apache2 and PHP7.1 / Composer based on Alpine Linux 3.6.
+This is a docker images with Apache and PHP / Composer based on Alpine Linux.
 
 To access site contents from outside the container you should map `/var/www/localhost/htdocs`.
 
@@ -81,8 +81,8 @@ Various env vars can be set at runtime via your docker command or docker-compose
 | PUBLIC_DIRECTORY |         | The public directory contains the `index.php` file, which is the entry point for all requests entering your application. |
 
 ## Examples
-- plain, accessible on port 8080 `docker run -d -p 8080:80 kalicki2k/alpine-apache-php:7.1`
-- with external contents in /home/kalicki2k/html `docker run -d -p 8080:80 -v /home/kalicki2k/html:/var/www/localhost kalicki2k/alpine-apache-php:7.1`
+- plain, accessible on port 8080 `docker run -d -p 8080:80 kalicki2k/alpine-apache-php:7.2`
+- with external contents in /home/kalicki2k/html `docker run -d -p 8080:80 -v /home/kalicki2k/html:/var/www/localhost kalicki2k/alpine-apache-php:7.2`
 
 The docker container is started with the -d flag so it will run into the background. To run commands or edit settings inside
 the container run `docker exec -ti <container id> /bin/bash'
