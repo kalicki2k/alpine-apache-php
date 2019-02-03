@@ -1,4 +1,4 @@
-# Apache with PHP on Alpine Linux 3.6
+# Apache with PHP on Alpine Linux
 
 This is a docker images with Apache and PHP / Composer based on Alpine Linux.
 
