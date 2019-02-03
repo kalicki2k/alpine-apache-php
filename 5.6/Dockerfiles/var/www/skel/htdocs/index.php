@@ -8,7 +8,8 @@
     <style type="text/css">
         html, body {
             background-color: #30353E;
-            height: 100%; }
+            height: 100%;
+            margin: 0; }
 
         body {
             -webkit-box-align: center;
