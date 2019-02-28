@@ -138,7 +138,7 @@ function set_user_and_group {
         echo "Created apache default user and group."
     fi
 
-    chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}/${HTDOCS}
+    chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}${HTDOCS}
 }
 
 function set_ssl {
