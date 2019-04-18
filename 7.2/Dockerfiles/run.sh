@@ -8,6 +8,7 @@
 #   - Creating default index.html
 #   - Setting server name
 #   - Setting server e-mail
+#   - Setting web root
 #   - Setting user and group
 #   - Setting SSL/TLS Certificate
 #   - Setting php.ini file
@@ -21,18 +22,18 @@ SERVER_ROOT=/var/www/localhost
 TEMPLATE_ROOT=/var/www/skel
 PHP_INI=/etc/php7/php.ini
 
-if [[ ! -z ${APACHE_WEB_ROOT} ]]; then
-    if [[ ${APACHE_WEB_ROOT} =~ ^/ ]]; then
-        HTDOCS=${APACHE_WEB_ROOT}
-    else
-        HTDOCS=/${APACHE_WEB_ROOT}
-    fi
-fi
-
 #
 # Checks if required folder exists. If not, it will be created.
 #
 function create_directories {
+    if [[ ! -z ${APACHE_WEB_ROOT} ]]; then
+        if [[ ${APACHE_WEB_ROOT} =~ ^/ ]]; then
+            HTDOCS=${APACHE_WEB_ROOT}
+        else
+            HTDOCS=/${APACHE_WEB_ROOT}
+        fi
+    fi
+
     DIRECTORIES=(/cgi-bin ${HTDOCS} /logs ${ERROR})
 
     for DIRECTORY in ${DIRECTORIES[@]}; do
@@ -101,16 +102,18 @@ function set_server_mail {
 }
 
 function set_web_root {
+    HTDOCS_TMP=${HTDOCS}
+
     if [[ ${APACHE_WEB_ROOT} =~ ^/ ]]; then
-        HTDOCS=${APACHE_WEB_ROOT:1:${#APACHE_WEB_ROOT}}
+        HTDOCS_TMP=${APACHE_WEB_ROOT:1:${#APACHE_WEB_ROOT}}
     fi
 
-    if [[ ${HTDOCS} == *"/"* ]]; then
-        HTDOCS=${HTDOCS//\//\\/}
+    if [[ ${HTDOCS_TMP} == *"/"* ]]; then
+        HTDOCS_TMP=${HTDOCS_TMP//\//\\/}
     fi
 
-    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS}/" ${APACHE_ROOT}/httpd.conf
-    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS}/" ${APACHE_ROOT}/conf.d/ssl.conf
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS_TMP}/" ${APACHE_ROOT}/httpd.conf
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS_TMP}/" ${APACHE_ROOT}/conf.d/ssl.conf
 }
 
 function set_user_and_group {
