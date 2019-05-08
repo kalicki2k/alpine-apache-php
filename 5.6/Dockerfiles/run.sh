@@ -102,7 +102,7 @@ function set_server_mail {
 }
 
 function set_web_root {
-    HTDOCS_TMP=${HTDOCS}
+    local HTDOCS_TMP=${HTDOCS}
 
     if [[ ${APACHE_WEB_ROOT} =~ ^/ ]]; then
         HTDOCS_TMP=${APACHE_WEB_ROOT:1:${#APACHE_WEB_ROOT}}
@@ -216,18 +216,22 @@ function run {
     exec /usr/sbin/httpd -D FOREGROUND
 }
 
-create_directories
-create_error_pages
-create_public_directory
-create_default_page
+function main {
+    create_directories
+    create_error_pages
+    create_public_directory
+    create_default_page
 
-set_server_name
-set_server_mail
-set_web_root
-set_user_and_group
-set_ssl
+    set_server_name
+    set_server_mail
+    set_web_root
+    set_user_and_group
+    set_ssl
 
-set_php_ini
+    set_php_ini
 
-clean
-run
+    clean
+    run
+}
+
+main
