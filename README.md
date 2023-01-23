@@ -21,7 +21,7 @@ Various env vars can be set at runtime via your docker command or docker-compose
 
 ### Apache
 | Name                         | Description                                                     |
-| ---------------------------- | --------------------------------------------------------------- |
+| ---------------------------- |-----------------------------------------------------------------|
 | APACHE_SERVER_NAME           | Server name that the server uses to identify itself.            |
 | APACHE_SERVER_MAIL           | Your address, where problems with the server should be e-mailed |
 | APACHE_RUN_USER              | User name to run httpd as.                                      |
@@ -31,7 +31,7 @@ Various env vars can be set at runtime via your docker command or docker-compose
 | APACHE_SSL_CERTIFICATE       | Server Certificate...                                           |
 | APACHE_SSL_CERTIFICATE_KEY   | Server Private Key...                                           |
 | APACHE_SSL_CERTIFICATE_CHAIN | Server Certificate Chain...                                     |
-| APACHE_WEB_ROOT              |                                                                 |
+| APACHE_WEB_ROOT              | Web root (default: /htdocs)                                     |
 
 ### PHP
 | Name                         | Default                           | Description                                                                                                                                                                                                                                                                   |
@@ -81,8 +81,8 @@ Various env vars can be set at runtime via your docker command or docker-compose
 | PUBLIC_DIRECTORY |         | The public directory contains the `index.php` file, which is the entry point for all requests entering your application. |
 
 ## Examples
-- plain, accessible on port 8080 `docker run -d -p 8080:80 kalicki2k/alpine-apache-php:7.2`
-- with external contents in /home/kalicki2k/html `docker run -d -p 8080:80 -v /home/kalicki2k/html:/var/www/localhost kalicki2k/alpine-apache-php:7.2`
+- plain, accessible on port 8080 `docker run -d --name apache-php -p 8080:80 kalicki2k/alpine-apache-php`
+- with external contents in /home/kalicki2k/html `docker run -d --name apache-php -p 8080:80 -v /home/kalicki2k/html:/var/www/localhost kalicki2k/alpine-apache-php`
 
 The docker container is started with the -d flag so it will run into the background. To run commands or edit settings inside
 the container run `docker exec -ti <container id> /bin/bash'
