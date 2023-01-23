@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Version: 1.1
+# Version: 1.2
 # Purpose:
 #   - Creating required directories
 #   - Creating error pages
@@ -70,10 +70,12 @@ function create_public_directory {
 
 function create_default_page {
     if [[ -z ${PUBLIC_DIRECTORY} ]] && [[ -z "$(ls -A ${SERVER_ROOT}${HTDOCS})" ]]; then
-        cp ${TEMPLATE_ROOT}/htdocs/index.html ${SERVER_ROOT}${HTDOCS}/index.html
+        cp ${TEMPLATE_ROOT}/htdocs/index.php ${SERVER_ROOT}${HTDOCS}/index.php
+        cp ${TEMPLATE_ROOT}/htdocs/info.php ${SERVER_ROOT}${HTDOCS}/info.php
         echo "Created default pages."
     elif [[ ! -z ${PUBLIC_DIRECTORY} ]] && [[ -z "$(ls -A ${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY})" ]]; then
-        cp ${TEMPLATE_ROOT}/htdocs/index.html ${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY}/index.html
+        cp ${TEMPLATE_ROOT}/htdocs/index.php ${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY}/index.php
+        cp ${TEMPLATE_ROOT}/htdocs/info.php ${SERVER_ROOT}${HTDOCS}/${PUBLIC_DIRECTORY}/info.php
         echo "Created default pages."
     fi
 }
@@ -112,8 +114,10 @@ function set_web_root {
         HTDOCS_TMP=${HTDOCS_TMP//\//\\/}
     fi
 
-    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS_TMP}/" ${APACHE_ROOT}/httpd.conf
-    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost\/${HTDOCS_TMP}/" ${APACHE_ROOT}/conf.d/ssl.conf
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost${HTDOCS_TMP}/" ${APACHE_ROOT}/httpd.conf
+    sed -i "s/\/var\/www\/localhost\/htdocs/\/var\/www\/localhost${HTDOCS_TMP}/" ${APACHE_ROOT}/conf.d/ssl.conf
+
+    echo "Set web root to ${HTDOCS}."
 }
 
 function set_user_and_group {
@@ -134,11 +138,11 @@ function set_user_and_group {
             adduser -G ${APACHE_RUN_GROUP} -h ${SERVER_ROOT} ${APACHE_RUN_USER} > /dev/null 2>&1
         fi
 
-        echo "Created apache custom user and group."
+        echo "Set apache custom user and group."
     else
         APACHE_RUN_USER=apache
         APACHE_RUN_GROUP=apache
-        echo "Created apache default user and group."
+        echo "Set apache default user and group."
     fi
 
     chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} ${SERVER_ROOT}${HTDOCS}
@@ -206,6 +210,7 @@ function set_php_ini {
 #
 function clean {
     rm -rf /run/apache2/*
+    echo "Cleanup of old Apache daemon."
 }
 
 #
